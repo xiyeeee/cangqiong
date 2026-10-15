@@ -1,10 +1,10 @@
 package com.sky.service;
 
-import com.github.pagehelper.Page;
 import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.result.PageResult;
-import org.springframework.stereotype.Service;
+import com.sky.entity.Category;
+import java.util.List;
 
 /**
  * @Description
@@ -24,5 +24,5 @@ public interface CategoryService {
 
     void deleteById(Long id);
 
-    void getListByType( Integer type);
+    List<Category> getListByType( Integer type);
 }

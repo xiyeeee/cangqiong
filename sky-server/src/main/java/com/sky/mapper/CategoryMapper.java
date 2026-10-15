@@ -11,6 +11,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * @Description
  * @Author xiye
@@ -39,4 +41,7 @@ public interface CategoryMapper {
 
     @Delete( "delete  from category where  id =#{id}")
     void deleteById(Long id);
+
+    @Select("select  * from category where  type =#{type}")
+    List<Category> getListByType(Integer type);
 }

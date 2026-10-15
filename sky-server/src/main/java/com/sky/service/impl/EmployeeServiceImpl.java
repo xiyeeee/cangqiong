@@ -1,12 +1,10 @@
 package com.sky.service.impl;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
-import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
@@ -23,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -74,7 +71,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void save(EmployeeDTO employeeDTO) {
 
         Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDTO,employee);
+        BeanUtils.copyProperties(employeeDTO, employee);
 //        employee.setCreateTime(LocalDateTime.now());
 //        employee.setUpdateTime(LocalDateTime.now());
         employee.setStatus(StatusConstant.ENABLE);
@@ -85,13 +82,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeMapper.insert(employee);
     }
 
+
     @Override
     public PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
-        PageHelper.startPage(employeePageQueryDTO.getPage(),employeePageQueryDTO.getPageSize());
+        PageHelper.startPage(employeePageQueryDTO.getPage(), employeePageQueryDTO.getPageSize());
         Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);
         long total = page.getTotal();
         List<Employee> records = page.getResult();
-        return new PageResult(total,records);
+        return new PageResult(total, records);
     }
 
     @Override
@@ -107,21 +105,21 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeDTO getEmployeeById(Long id) {
-        Employee employee =   employeeMapper.getById(id);
+        Employee employee = employeeMapper.getById(id);
         EmployeeDTO employeeDTO = new EmployeeDTO();
-        BeanUtils.copyProperties(employee,employeeDTO);
-        return  employeeDTO;
+        BeanUtils.copyProperties(employee, employeeDTO);
+        return employeeDTO;
     }
 
     @Override
     public void update(EmployeeDTO employeeDTO) {
-        if(employeeDTO.getId() == null){
+        if (employeeDTO.getId() == null) {
             throw new RuntimeException("id不能为空");
         }
         Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDTO,employee);
-//        employee.setUpdateTime(LocalDateTime.now());
-//        employee.setUpdateUser(BaseContext.getCurrentId());
+        BeanUtils.copyProperties(employeeDTO, employee);
+//      employee.setUpdateTime(LocalDateTime.now());
+//      employee.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.updateById(employee);
     }
 }
