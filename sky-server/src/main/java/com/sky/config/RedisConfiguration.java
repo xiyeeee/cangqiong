@@ -1,0 +1,31 @@
+package com.sky.config;/**
+ * @Description
+ * @Author xiye
+ * @Date 2026/10/19
+ */
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+/**
+ * @Description
+ * @Author xiye
+ * @Date 2026/10/19
+ */
+@Configuration
+@Slf4j
+public class RedisConfiguration {
+
+    @Bean
+    public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate redisTemplate = new RedisTemplate();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        // 序列化
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        return redisTemplate;
+    }
+}
