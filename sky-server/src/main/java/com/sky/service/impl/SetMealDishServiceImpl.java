@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @Description
  * @Author xiye
@@ -26,5 +29,15 @@ public class SetMealDishServiceImpl implements SetMealDishService {
     @Override
     public SetmealDish getByDishId(Long dishId) {
         return setMealDishMapper.getByDishId(dishId);
+    }
+
+    @Override
+    public void deleteBySetmealId(Long setmealId) {
+
+    }
+
+    @Override
+    public List<SetmealDish> getBySetmealId(Long setmealId) {
+        return Collections.emptyList();
     }
 }

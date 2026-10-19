@@ -18,5 +18,9 @@ public interface SetMealDishService {
 
     SetmealDish getByDishId(Long dishId);
 
+    void deleteBySetmealId(Long setmealId);
+
+    List<SetmealDish> getBySetmealId(Long setmealId);
+
 
 }

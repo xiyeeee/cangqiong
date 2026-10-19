@@ -1,0 +1,32 @@
+package com.sky.mapper;
+
+
+import com.github.pagehelper.Page;
+import com.sky.annotation.AutoFill;
+import com.sky.dto.SetmealPageQueryDTO;
+import com.sky.entity.Employee;
+import com.sky.entity.Setmeal;
+import com.sky.enumeration.OperationType;
+import com.sky.vo.SetmealVO;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+
+@Mapper
+public interface SetMealMapper {
+
+    @AutoFill(value = OperationType.INSERT)
+    void save(Setmeal setmeal);
+
+    @AutoFill(value = OperationType.UPDATE)
+    void update(Setmeal setmeal);
+
+    Page<SetmealVO> pageQuery(SetmealPageQueryDTO setmealPageQueryDTO);
+
+    Setmeal getById(Long id);
+
+    Integer getOnSaleMealCount(@Param("ids") List<Long> ids,@Param("status") Integer status);
+
+    void deleteByIds(@Param("ids") List<Long> ids);
+}

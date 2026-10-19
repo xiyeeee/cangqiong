@@ -11,6 +11,8 @@ public class MessageConstant {
     public static final String UNKNOWN_ERROR = "未知错误";
     public static final String USER_NOT_LOGIN = "用户未登录";
     public static final String CATEGORY_BE_RELATED_BY_SETMEAL = "当前分类关联了套餐,不能删除";
+    public static final String SEATMEAL_ON_SEAL = "当前套餐在售,不能删除";
+
     public static final String CATEGORY_BE_RELATED_BY_DISH = "当前分类关联了菜品,不能删除";
     public static final String SHOPPING_CART_IS_NULL = "购物车数据为空，不能下单";
     public static final String ADDRESS_BOOK_IS_NULL = "用户地址为空，不能下单";
