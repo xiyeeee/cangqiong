@@ -6,6 +6,7 @@ package com.sky.controller.admin;/**
 
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
@@ -88,6 +89,13 @@ public class DishController {
         }
         dishService.deleteByIds(ids);
         return Result.success();
+    }
+
+    @ApiOperation("菜品下拉")
+    @GetMapping("/list")
+    public Result<List> pageQuery(@RequestParam Long categoryId) {
+        List<Dish> list = dishService.getListByCategoryId(categoryId);
+        return Result.success(list);
     }
 
 }
