@@ -4,8 +4,10 @@
 <mapper namespace="com.sky.mapper.SetMealMapper">
 
     <insert id="save" useGeneratedKeys="true" keyProperty="id">
-        insert into setmeal ( name, price, image, category_id, description, status, update_time, create_time, create_user, update_user)
-        values (#{name}, #{price}, #{image},#{categoryId}, #{description}, #{status}, #{updateTime}, #{createTime}, #{createUser}, #{updateUser})
+        insert into setmeal (name, price, image, category_id, description, status, update_time, create_time,
+                             create_user, update_user)
+        values (#{name}, #{price}, #{image}, #{categoryId}, #{description}, #{status}, #{updateTime}, #{createTime},
+                #{createUser}, #{updateUser})
     </insert>
 
     <update id="update">
@@ -26,12 +28,10 @@
     </update>
 
     <delete id="delete">
-        delete from setmeal where id = #{id}
+        delete
+        from setmeal
+        where id = #{id}
     </delete>
-
-    <select id="list" resultType="com.sky.entity.Setmeal">
-        select * from setmeal
-    </select>
 
 
     <select id="pageQuery" resultType="com.sky.vo.SetmealVO">
@@ -53,11 +53,15 @@
     </select>
 
     <select id="getById" resultType="com.sky.entity.Setmeal">
-        select * from setmeal where id = #{id}
+        select *
+        from setmeal
+        where id = #{id}
     </select>
 
     <select id="getSetmealDishById" resultType="com.sky.entity.SetmealDish">
-        select * from setmeal_dish where setmeal_id = #{id}
+        select *
+        from setmeal_dish
+        where setmeal_id = #{id}
     </select>
     <select id="getOnSaleMealCount" resultType="int">
         select count(*) from setmeal where id in
@@ -73,4 +77,14 @@
             #{id}
         </foreach>
     </delete>
+
+
+    <select id="list" parameterType="Setmeal" resultType="Setmeal">
+        select * from setmeal
+        <where>
+            <if test="name != null">and name like concat('%',#{name},'%')</if>
+            <if test="categoryId != null">and category_id = #{categoryId}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+    </select>
 </mapper>

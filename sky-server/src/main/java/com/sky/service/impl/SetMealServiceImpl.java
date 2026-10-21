@@ -7,7 +7,6 @@ import com.sky.constant.StatusConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.entity.Dish;
-import com.sky.entity.Employee;
 import com.sky.entity.Setmeal;
 import com.sky.entity.SetmealDish;
 import com.sky.exception.BaseException;
@@ -18,6 +17,7 @@ import com.sky.mapper.SetMealDishMapper;
 import com.sky.mapper.SetMealMapper;
 import com.sky.result.PageResult;
 import com.sky.service.SetMealService;
+import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -44,11 +44,11 @@ public class SetMealServiceImpl implements SetMealService {
     public void save(SetmealDTO setmealDTO) {
         Setmeal setmeal = new Setmeal();
 
-        BeanUtils.copyProperties(setmealDTO,setmeal);
+        BeanUtils.copyProperties(setmealDTO, setmeal);
         setMealMapper.save(setmeal);
         Long setmealId = setmeal.getId();
-        List<SetmealDish>  setmealDishes= setmealDTO.getSetmealDishes();
-        if(setmealDishes != null && !setmealDishes.isEmpty()){
+        List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
+        if (setmealDishes != null && !setmealDishes.isEmpty()) {
 
             setmealDishes.forEach(setmealDish -> setmealDish.setSetmealId(setmealId));
             setMealDishMapper.saveBatch(setmealDishes);
@@ -60,20 +60,20 @@ public class SetMealServiceImpl implements SetMealService {
     public void update(SetmealDTO setmealDTO) {
         Setmeal setmeal = new Setmeal();
         Long setmealId = setmealDTO.getId();
-        if(setmealId==null){
+        if (setmealId == null) {
             throw new BaseException("id不存在");
         }
         Setmeal setmealEntity = setMealMapper.getById(setmealId);
-        if (setmealEntity==null){
+        if (setmealEntity == null) {
             throw new BaseException("id不存在");
         }
 
-        BeanUtils.copyProperties(setmealDTO,setmeal);
+        BeanUtils.copyProperties(setmealDTO, setmeal);
         setMealMapper.update(setmeal);
         setMealDishMapper.deleteBySetMealId(setmealId);
-        List<SetmealDish>  setmealDishes= setmealDTO.getSetmealDishes();
+        List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
 
-        if(setmealDishes != null && !setmealDishes.isEmpty()){
+        if (setmealDishes != null && !setmealDishes.isEmpty()) {
             setmealDishes.forEach(setmealDish -> setmealDish.setSetmealId(setmealId));
             setMealDishMapper.saveBatch(setmealDishes);
         }
@@ -92,13 +92,13 @@ public class SetMealServiceImpl implements SetMealService {
     public void updateStatus(Integer status, Long id) {
         Setmeal setmeal = new Setmeal();
         setmeal.setId(id);
-        if(Objects.equals(status, StatusConstant.ENABLE)){
+        if (Objects.equals(status, StatusConstant.ENABLE)) {
             List<SetmealDish> setMealDishList = setMealDishMapper.getBySetMealId(id);
-            if(setMealDishList!=null&&!setMealDishList.isEmpty()){
+            if (setMealDishList != null && !setMealDishList.isEmpty()) {
                 for (SetmealDish setmealDish : setMealDishList) {
                     Dish dish = dishMapper.getById(setmealDish.getDishId());
-                    if (dish!=null&&Objects.equals(dish.getStatus(), StatusConstant.DISABLE)){
-                        throw new  SetmealEnableFailedException(MessageConstant.SETMEAL_ENABLE_FAILED);
+                    if (dish != null && Objects.equals(dish.getStatus(), StatusConstant.DISABLE)) {
+                        throw new SetmealEnableFailedException(MessageConstant.SETMEAL_ENABLE_FAILED);
                     }
                 }
             }
@@ -112,8 +112,8 @@ public class SetMealServiceImpl implements SetMealService {
     public SetmealDTO getSetMealById(Long id) {
         SetmealDTO setmealDTO = new SetmealDTO();
         Setmeal setMeal = setMealMapper.getById(id);
-        if(setMeal!=null){
-            BeanUtils.copyProperties(setMeal,setmealDTO);
+        if (setMeal != null) {
+            BeanUtils.copyProperties(setMeal, setmealDTO);
         }
         List<SetmealDish> setMealDishList = setMealDishMapper.getBySetMealId(id);
         setmealDTO.setSetmealDishes(setMealDishList);
@@ -124,10 +124,34 @@ public class SetMealServiceImpl implements SetMealService {
     @Transactional
     public void deleteByIds(List<Long> ids) {
         Integer onSaleMealCount = setMealMapper.getOnSaleMealCount(ids, StatusConstant.ENABLE);
-        if(onSaleMealCount!=null && onSaleMealCount > 0){
+        if (onSaleMealCount != null && onSaleMealCount > 0) {
             throw new DeletionNotAllowedException(MessageConstant.SEATMEAL_ON_SEAL);
         }
         setMealMapper.deleteByIds(ids);
         setMealDishMapper.deleteBySetMealIds(ids);
+    }
+
+
+    /**
+     * 条件查询
+     *
+     * @param setmeal
+     * @return
+     */
+    @Override
+    public List<Setmeal> list(Setmeal setmeal) {
+        List<Setmeal> list = setMealMapper.list(setmeal);
+        return list;
+    }
+
+    /**
+     * 根据id查询菜品选项
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public List<DishItemVO> getDishItemById(Long id) {
+        return setMealMapper.getDishItemBySetmealId(id);
     }
 }
