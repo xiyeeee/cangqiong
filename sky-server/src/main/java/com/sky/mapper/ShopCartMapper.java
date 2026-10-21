@@ -5,7 +5,6 @@ package com.sky.mapper;/**
  */
 
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Update;
 
 /**
  * @Description
@@ -13,8 +12,6 @@ import org.apache.ibatis.annotations.Update;
  * @Date 2026/10/20
  */
 @Mapper
-public interface ShopMapper {
-
-    @Update("update ")
+public interface ShopCartMapper {
     void updateShopStatus();
 }
