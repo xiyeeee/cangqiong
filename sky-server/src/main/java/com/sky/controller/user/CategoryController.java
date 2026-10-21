@@ -28,8 +28,8 @@ public class CategoryController {
      */
     @GetMapping("/list")
     @ApiOperation("查询分类")
-    public Result<List<Category>> list(Integer type) {
-        List<Category> list = categoryService.getListByType(type);
+    public Result<List<Category>> list() {
+        List<Category> list = categoryService.getList();
         return Result.success(list);
     }
 }
