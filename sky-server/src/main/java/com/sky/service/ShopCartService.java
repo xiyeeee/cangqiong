@@ -11,7 +11,6 @@ import java.util.List;
  * @Date 2026/10/20
  */
 public interface ShopCartService {
-    void updateShopStatus(Integer status);
 
     void add(ShoppingCartDTO shoppingCartDTO);
 

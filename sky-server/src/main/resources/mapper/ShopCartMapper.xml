@@ -3,4 +3,74 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.sky.mapper.ShopCartMapper">
 
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into shopping_cart (name, image, user_id, dish_id, setmeal_id, dish_flavor, number, amount, create_time)
+        values (#{name}, #{image}, #{userId}, #{dishId}, #{setmealId}, #{dishFlavor}, #{number}, #{amount}, #{createTime})
+    </insert>
+
+    <update id="update">
+        update shopping_cart
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="image != null">
+                image = #{image},
+            </if>
+            <if test="dishId != null">
+                dish_id = #{dishId},
+            </if>
+            <if test="setmealId != null">
+                setmeal_id = #{setmealId},
+            </if>
+            <if test="dishFlavor != null">
+                dish_flavor = #{dishFlavor},
+            </if>
+            <if test="number != null">
+                number = #{number},
+            </if>
+            <if test="amount != null">
+                amount = #{amount},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="getShopCartBySetmealId" resultType="com.sky.entity.ShoppingCart">
+        select *
+        from shopping_cart
+        where user_id = #{userId}
+          and setmeal_id = #{setmealId}
+        limit 1
+    </select>
+
+    <select id="getShopCartByDishId" resultType="com.sky.entity.ShoppingCart">
+        select *
+        from shopping_cart
+        where user_id = #{userId}
+          and dish_id = #{dishId}
+        <choose>
+            <when test="dishFlavor != null and dishFlavor != ''">
+                and dish_flavor = #{dishFlavor}
+            </when>
+            <otherwise>
+                and (dish_flavor is null or dish_flavor = '')
+            </otherwise>
+        </choose>
+        limit 1
+    </select>
+
+    <select id="getListByUserId" resultType="com.sky.entity.ShoppingCart">
+        select *
+        from shopping_cart
+        where user_id = #{userId}
+        order by create_time desc
+    </select>
+
+    <delete id="clean">
+        delete
+        from shopping_cart
+        where user_id = #{userId}
+    </delete>
+
 </mapper>

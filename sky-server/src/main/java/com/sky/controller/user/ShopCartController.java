@@ -18,7 +18,7 @@ import java.util.List;
 @Slf4j
 public class ShopCartController {
     @Autowired
-     ShopCartService shopCartService;
+    ShopCartService shopCartService;
 
 
     /**
@@ -27,7 +27,7 @@ public class ShopCartController {
      */
 
     @PostMapping("/add")
-    public Result add(ShoppingCartDTO shoppingCartDTO){
+    public Result add(@RequestBody ShoppingCartDTO shoppingCartDTO) {
         shopCartService.add(shoppingCartDTO);
         return Result.success();
     }
@@ -36,25 +36,27 @@ public class ShopCartController {
      * 数量减1
      */
     @PostMapping("/sub")
-    public Result sub(ShoppingCartDTO shoppingCartDTO){
+    public Result sub(@RequestBody ShoppingCartDTO shoppingCartDTO) {
         shopCartService.sub(shoppingCartDTO);
         return Result.success();
     }
+
     /**
      * 查看
      */
     @GetMapping("/list")
-    public Result<List<ShoppingCart>>   getList(){
+    public Result<List<ShoppingCart>> getList() {
         Long userId = BaseContext.getCurrentId();
 
-        List<ShoppingCart> shoppingCartList =   shopCartService.getListByUserId(userId);
+        List<ShoppingCart> shoppingCartList = shopCartService.getListByUserId(userId);
         return Result.success(shoppingCartList);
     }
+
     /**
      * 清空
      */
     @DeleteMapping("/clean")
-    public Result clean(){
+    public Result clean() {
         Long userId = BaseContext.getCurrentId();
         shopCartService.cleanByUserId(userId);
         return Result.success();
