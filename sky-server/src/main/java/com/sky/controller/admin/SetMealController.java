@@ -11,6 +11,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,35 +25,31 @@ import java.util.Set;
 public class SetMealController {
     @Autowired
     SetMealService setMealService;
-    @Autowired
-    RedisTemplate redisTemplate;
 
-    private void deleteSetmealRedis(){
-        Set keys = redisTemplate.keys("categoryId_*");
-        redisTemplate.delete(keys);
-    }
+
+
 
     @PostMapping
     @ApiOperation("新增套餐")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result save(@RequestBody SetmealDTO setmealDTO){
         setMealService.save(setmealDTO);
-        deleteSetmealRedis();
         return Result.success();
     }
 
     @PutMapping
     @ApiOperation("修改套餐")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result update(@RequestBody SetmealDTO setmealDTO){
         setMealService.update(setmealDTO);
-        deleteSetmealRedis();
         return Result.success();
     }
 
     @PostMapping("/status/{status}")
     @ApiOperation("修改套餐状态")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result updateStatus(@PathVariable Integer status ,Long id){
         setMealService.updateStatus(status,id);
-        deleteSetmealRedis();
         return Result.success();
     }
     @GetMapping("/page")
@@ -71,9 +68,9 @@ public class SetMealController {
 
     @DeleteMapping()
     @ApiOperation("删除套餐")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result deleteByIds(@RequestParam List<Long> ids){
         setMealService.deleteByIds(ids);
-        deleteSetmealRedis();
         return Result.success();
     }
 

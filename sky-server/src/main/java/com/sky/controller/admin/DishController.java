@@ -15,6 +15,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,39 +37,35 @@ public class DishController {
      */
     @Autowired
     private DishService dishService;
-    @Autowired
-    private RedisTemplate<Object, Object> redisTemplate;
 
-    private void deleteDishRedis(){
-        Set keys = redisTemplate.keys("dish_*");
-        redisTemplate.delete(keys);
-    }
+
+
 
     @PostMapping
     @ApiOperation("新增菜品")
+    @CacheEvict(cacheNames = "dishCache" ,allEntries = true)
     public Result save(@RequestBody DishDTO dishDTO) {
 
         dishService.save(dishDTO);
-        deleteDishRedis();
         return Result.success();
 
     }
 
     @PutMapping
     @ApiOperation("修改菜品")
+    @CacheEvict(cacheNames = "dishCache" ,allEntries = true)
     public Result update(@RequestBody DishDTO dishDTO) {
 
         dishService.update(dishDTO);
-        deleteDishRedis();
         return Result.success();
     }
 
     @PostMapping("/status/{status}")
     @ApiOperation("修改菜品状态")
+    @CacheEvict(cacheNames = "dishCache" ,allEntries = true)
     public Result updateDishStatus(@PathVariable Integer status, Long id) {
 
         dishService.updateDishStatus(status, id);
-        deleteDishRedis();
         return Result.success();
     }
 
@@ -96,12 +93,12 @@ public class DishController {
 
     @ApiOperation("删除菜品")
     @DeleteMapping()
+    @CacheEvict(cacheNames = "dishCache" ,allEntries = true)
     public Result deleteById(@RequestParam List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的菜品");
         }
         dishService.deleteByIds(ids);
-        deleteDishRedis();
         return Result.success();
     }
 
