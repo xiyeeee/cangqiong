@@ -15,9 +15,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @Description
@@ -34,13 +36,22 @@ public class DishController {
      */
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate<Object, Object> redisTemplate;
+
+    private void deleteDishRedis(){
+        Set keys = redisTemplate.keys("dish_*");
+        redisTemplate.delete(keys);
+    }
 
     @PostMapping
     @ApiOperation("新增菜品")
     public Result save(@RequestBody DishDTO dishDTO) {
 
         dishService.save(dishDTO);
+        deleteDishRedis();
         return Result.success();
+
     }
 
     @PutMapping
@@ -48,6 +59,7 @@ public class DishController {
     public Result update(@RequestBody DishDTO dishDTO) {
 
         dishService.update(dishDTO);
+        deleteDishRedis();
         return Result.success();
     }
 
@@ -56,6 +68,7 @@ public class DishController {
     public Result updateDishStatus(@PathVariable Integer status, Long id) {
 
         dishService.updateDishStatus(status, id);
+        deleteDishRedis();
         return Result.success();
     }
 
@@ -88,6 +101,7 @@ public class DishController {
             return Result.error("请选择要删除的菜品");
         }
         dishService.deleteByIds(ids);
+        deleteDishRedis();
         return Result.success();
     }
 
