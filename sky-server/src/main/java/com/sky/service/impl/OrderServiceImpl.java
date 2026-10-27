@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.sky.entity.Orders.PENDING_PAYMENT;
 import static com.sky.entity.Orders.UN_PAID;
@@ -161,6 +162,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public PageResult getHistoryOrders(OrdersPageQueryDTO ordersPageQueryDTO) {
+        Long userId = BaseContext.getCurrentId();
+        ordersPageQueryDTO.setUserId(userId);
         PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
         Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
         long total = page.getTotal();
@@ -170,20 +173,32 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderVO getOrdersDetail(Long id) {
+    public OrderVO getOrdersDetail(Long orderId) {
         OrderVO orderVO = new OrderVO();
-
-
-        return null;
+        OrderDetail orderDetail = orderDetailMapper.getOrdersDetailByOrderId(orderId);
+        BeanUtils.copyProperties(orderDetail, orderVO);
+        return orderVO;
     }
 
     @Override
+    @Transactional
     public void cancel(Long id) {
-
+        // 校验本人通过后才取消
+        Long userId = BaseContext.getCurrentId();
+        Orders order = orderMapper.getOrderById(id);
+        if (!Objects.equals(userId, order.getUserId())) {
+            throw new RuntimeException("非用户本人");
+        }
+        order.setStatus(Orders.CANCELLED);
+        orderMapper.update(order);
     }
 
     @Override
+    @Transactional
     public void repetition(Long id) {
-
+        ShoppingCart shoppingCart = new ShoppingCart();
+        OrderDetail ordersDetail = orderDetailMapper.getOrdersDetailByOrderId(id);
+        BeanUtils.copyProperties(ordersDetail, shoppingCart);
+        shopCartMapper.insert(shoppingCart);
     }
 }

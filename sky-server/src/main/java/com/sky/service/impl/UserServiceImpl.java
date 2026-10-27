@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
 
         if (user == null) {
             user = User.builder().openid(openId).build();
-            Long id = userMapper.insert(user);
+            userMapper.insert(user);
         }
 
 

@@ -18,7 +18,7 @@ public interface UserMapper {
     User getByOpenId(String openid);
 
     @AutoFill(value = OperationType.INSERT)
-    Long insert(User user);
+    void insert(User user);
 
     @Select("select  * from user where  id= #{userId}")
     User getById(Long userId);
