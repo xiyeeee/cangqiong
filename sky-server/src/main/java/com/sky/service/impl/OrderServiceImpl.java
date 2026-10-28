@@ -5,16 +5,16 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.service.ShopCartService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import org.springframework.beans.BeanUtils;
@@ -46,6 +46,8 @@ public class OrderServiceImpl implements OrderService {
     private UserMapper userMapper;
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private ShopCartService shopCartService;
 
     private Long setOrders(OrdersSubmitDTO ordersSubmitDTO, Long userId) {
         Orders orders = new Orders();
@@ -117,6 +119,7 @@ public class OrderServiceImpl implements OrderService {
      * @param ordersPaymentDTO
      * @return
      */
+    @Override
     public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
         // 当前登录用户id
         Long userId = BaseContext.getCurrentId();
@@ -145,6 +148,7 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param outTradeNo
      */
+    @Override
     public void paySuccess(String outTradeNo) {
 
         // 根据订单号查询订单
@@ -184,9 +188,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderVO getOrdersDetail(Long id) {
+        Long userId = BaseContext.getCurrentId();
+
+
         OrderVO orderVO = new OrderVO();
         Orders orders = orderMapper.getOrderById(id);
         if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(userId, orders.getUserId())) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
         List<OrderDetail> orderDetailList = orderDetailMapper.getOrdersDetailByOrderId(orders.getId());
@@ -224,17 +234,146 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void repetition(Long id) {
         Long userId = BaseContext.getCurrentId();
-        ArrayList<ShoppingCart> shoppingCartList = new ArrayList<>();
+        Orders orders = orderMapper.getOrderById(id);
+        if (!Objects.equals(userId, orders.getUserId())) {
+            throw new RuntimeException("非用户本人");
+        }
 
         List<OrderDetail> ordersDetailList = orderDetailMapper.getOrdersDetailByOrderId(id);
         for (OrderDetail orderDetail : ordersDetailList) {
-            ShoppingCart shoppingCart = new ShoppingCart();
-            BeanUtils.copyProperties(orderDetail, shoppingCart);
-            shoppingCart.setId(null);
-            shoppingCart.setCreateTime(LocalDateTime.now());
-            shoppingCart.setUserId(userId);
-            shoppingCartList.add(shoppingCart);
+            ShoppingCartDTO shoppingCartDTO = new ShoppingCartDTO();
+            shoppingCartDTO.setDishId(orderDetail.getDishId());
+            shoppingCartDTO.setSetmealId(orderDetail.getSetmealId());
+            shoppingCartDTO.setDishFlavor(orderDetail.getDishFlavor());
+            // 原订单买了 number 份，就调用 number 次 add（每次 +1 或合并）
+            int count = orderDetail.getNumber() == null ? 1 : orderDetail.getNumber();
+            for (int i = 0; i < count; i++) {
+                shopCartService.add(shoppingCartDTO);
+            }
         }
-        shopCartMapper.insertBatch(shoppingCartList);
+    }
+
+    // ---------- 管理端 Day09（业务逻辑请在此补全） ----------
+
+    @Override
+    public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+        // TODO: PageHelper + pageQuery（不要 setUserId），封装 OrderVO 列表，可选 setOrderDishes
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
+        long total = page.getTotal();
+        List<OrderVO> list = new ArrayList<>();
+        for (Orders orders : page) {
+            OrderVO orderVO = new OrderVO();
+            BeanUtils.copyProperties(orders, orderVO);
+            List<OrderDetail> orderDetailList = orderDetailMapper.getOrdersDetailByOrderId(orders.getId());
+            orderVO.setOrderDetailList(orderDetailList);
+            list.add(orderVO);
+        }
+        return new PageResult(total, list);
+    }
+
+    @Override
+    @Transactional
+    public OrderStatisticsVO statistics() {
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        Integer tobeconfirmed = orderMapper.countByStatus(Orders.TO_BE_CONFIRMED);
+        Integer confirmed = orderMapper.countByStatus(Orders.CONFIRMED);
+        Integer inprogress = orderMapper.countByStatus(Orders.DELIVERY_IN_PROGRESS);
+        orderStatisticsVO.setToBeConfirmed(tobeconfirmed);
+        orderStatisticsVO.setConfirmed(confirmed);
+        orderStatisticsVO.setDeliveryInProgress(inprogress);
+        return orderStatisticsVO;
+    }
+
+    @Override
+    public OrderVO adminGetDetail(Long id) {
+        return getOrdersDetail(id);
+    }
+
+    @Override
+    @Transactional
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        Orders order = orderMapper.getOrderById(ordersConfirmDTO.getId());
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(order.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        if (!Objects.equals(ordersConfirmDTO.getStatus(), Orders.CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        order.setStatus(Orders.CONFIRMED);
+        orderMapper.update(order);
+    }
+
+    @Override
+    @Transactional
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders order = orderMapper.getOrderById(ordersRejectionDTO.getId());
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 待接单 已付款  可拒单
+        if (!Objects.equals(order.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        order.setStatus(Orders.CANCELLED);
+        order.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        //  已付款  拒单 退款
+        if (Objects.equals(order.getPayStatus(), Orders.PAID)) {
+            order.setStatus(Orders.REFUND);
+        }
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
+    }
+
+    @Override
+    @Transactional
+    public void adminCancel(OrdersCancelDTO ordersCancelDTO) {
+        Orders order = orderMapper.getOrderById(ordersCancelDTO.getId());
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 待接单 待付款  可取消
+        if (!Objects.equals(order.getStatus(), Orders.TO_BE_CONFIRMED) && !Objects.equals(order.getStatus(), Orders.PENDING_PAYMENT)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        if (Objects.equals(order.getStatus(), Orders.TO_BE_CONFIRMED)) {
+            order.setPayStatus(Orders.REFUND);
+        }
+        order.setStatus(Orders.CANCELLED);
+        order.setCancelReason(ordersCancelDTO.getCancelReason());
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
+    }
+
+    @Override
+    @Transactional
+    public void delivery(Long id) {
+        Orders order = orderMapper.getOrderById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(order.getStatus(), Orders.CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        order.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        order.setDeliveryTime(LocalDateTime.now());
+        orderMapper.update(order);
+    }
+
+    @Override
+    @Transactional
+    public void complete(Long id) {
+        Orders order = orderMapper.getOrderById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Objects.equals(order.getStatus(), Orders.DELIVERY_IN_PROGRESS)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        order.setStatus(Orders.COMPLETED);
+        orderMapper.update(order);
     }
 }
