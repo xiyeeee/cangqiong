@@ -17,6 +17,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,6 +50,13 @@ public class OrderServiceImpl implements OrderService {
     private WeChatPayUtil weChatPayUtil;
     @Autowired
     private ShopCartService shopCartService;
+    @Autowired
+    private WebSocketServer webSocketServer;
+
+    /**
+     * 管理端来单提醒（与 Vue 端约定为 "1" 时播放提示音）
+     */
+    private static final String ORDER_ALERT_MESSAGE = "1";
 
     private Long setOrders(OrdersSubmitDTO ordersSubmitDTO, Long userId) {
         Orders orders = new Orders();
@@ -163,6 +172,14 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        // 来单提醒：推送给已连接的 PC 管理端
+        HashMap hashMap = new HashMap();
+        hashMap.put("type", ORDER_ALERT_MESSAGE);
+        hashMap.put("orderId", orders.getId());
+        hashMap.put("content", "订单号" + outTradeNo);
+
+        webSocketServer.sendToAllClient(JSONObject.toJSONString(hashMap));
     }
 
     @Override
@@ -375,5 +392,20 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(Orders.COMPLETED);
         orderMapper.update(order);
+    }
+
+    @Override
+    public void reminder(Long id) {
+        Orders order = orderMapper.getOrderById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        // 催单
+        HashMap hashMap = new HashMap();
+        hashMap.put("type", 2);
+        hashMap.put("orderId", order.getId());
+        hashMap.put("content", "订单号" + order.getNumber());
+
+        webSocketServer.sendToAllClient(JSONObject.toJSONString(hashMap));
     }
 }
