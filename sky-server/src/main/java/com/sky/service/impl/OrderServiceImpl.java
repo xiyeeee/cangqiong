@@ -186,7 +186,9 @@ public class OrderServiceImpl implements OrderService {
     public OrderVO getOrdersDetail(Long id) {
         OrderVO orderVO = new OrderVO();
         Orders orders = orderMapper.getOrderById(id);
-
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
         List<OrderDetail> orderDetailList = orderDetailMapper.getOrdersDetailByOrderId(orders.getId());
         BeanUtils.copyProperties(orders, orderVO);
         orderVO.setOrderDetailList(orderDetailList);
