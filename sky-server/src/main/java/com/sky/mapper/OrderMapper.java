@@ -50,5 +50,7 @@ public interface OrderMapper {
 
     Integer orderSumByMap(Map map);
 
+    Integer countByMap(Map map);
+
     List<GoodsSalesDTO> getSalesTop10(Map map);
 }
