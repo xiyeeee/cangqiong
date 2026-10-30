@@ -4,11 +4,13 @@ package com.sky.service.impl;/**
  * @Date 2026/10/29
  */
 
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
+import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import lombok.extern.slf4j.Slf4j;
@@ -144,5 +146,32 @@ public class ReportServiceImpl implements ReportService {
                 totalOrderCount(totalOrderCount).
                 orderCompletionRate(rate).
                 build();
+    }
+
+    @Override
+    public SalesTop10ReportVO salesTop10(LocalDate begin, LocalDate end) {
+
+
+        List<LocalDate> dateList = new ArrayList<>();
+        List<String> nameList = new ArrayList<>();
+        List<String> numberList = new ArrayList<>();
+
+        dateList.add(begin);
+        while (!begin.equals(end)) {
+            begin = begin.plusDays(1);
+            dateList.add(begin);
+        }
+        for (LocalDate localDate : dateList) {
+            // 算开始和结束时间
+            LocalDateTime beginTime = LocalDateTime.of(localDate, LocalTime.MIN);
+            LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.MAX);
+            Map map = new HashMap();
+            map.put("begin", LocalDateTime.of(begin, LocalTime.MIN));
+            map.put("end", LocalDateTime.of(end, LocalTime.MAX));
+            map.put("status", Orders.COMPLETED);
+            List<GoodsSalesDTO> list = orderMapper.getSalesTop10(map);
+
+        }
+        return null;
     }
 }
